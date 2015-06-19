@@ -1,0 +1,155 @@
+<html>
+  <head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<title>Vending Machine Change Calculator TDD</title>
+	<link rel="stylesheet" href="https://code.jquery.com/qunit/qunit-1.18.0.css">
+	<link rel="stylesheet" href="http://yui.yahooapis.com/pure/0.6.0/pure-min.css">
+  </head>
+  <body>
+	<div id='main' style='padding: 2em;'>
+	  <h1>Vending Machine Change Calculator</h1>
+	  <h2>Calculate the Change for a Given Price and Cash Received</h2>
+	  <!-- <input type='text' id='price'> </input> -->
+	</div>
+
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
+	<script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
+	<script src="https://code.jquery.com/qunit/qunit-1.18.0.js"></script>
+
+	<script>
+
+	var coins = [
+		{ value: 5000,  remaining: 10 },
+		{ value: 2000,  remaining: 10 },
+		{ value: 1000,  remaining: 10 },
+		{ value: 500,   remaining: 10 },
+		{ value: 200,   remaining: 10 },
+		{ value: 100,   remaining: 10 },
+		{ value: 50,    remaining: 10 },
+		{ value: 20,    remaining: 10 },
+		{ value: 10,    remaining: 10 },
+		{ value: 5,     remaining: 10 },
+		{ value: 2,     remaining: 10 },
+		{ value: 1,     remaining: 10 }
+	];
+
+	var getChange = function (totalPayable, cashPaid) {
+	  'use strict';
+
+	  var change = [];
+	  var remaining = cashPaid - totalPayable;
+	  
+	  for (var i = 0; i < coins.length; i++){
+		var coin = coins[i].value;
+		if(remaining/coin >= 1){
+			var times = Math.floor(remaining/coin);
+
+			for(var j = 0; j < times; j++){
+				if ( coins[i].remaining > 0 ){
+					change.push(coin);
+					remaining = remaining - coin;
+					coins[i].remaining--;
+				}
+		  	}
+		}
+
+	  }
+
+	  return change;
+	};
+
+	var checkCoins = function(coin){
+
+	  for(var i = 0; i < coins.length; i++){
+		if( coins[i].value === coin ){
+		  return coins[i].remaining;
+		}
+	  }
+	  return 0;
+
+	}
+	
+	var addCoin = function(coin){
+	  
+	  for(var i = 0; i < coins.length; i++){
+		if( coins[i].value === coin ){
+		  coins[i].remaining++;
+		  return checkCoins( coin );
+		}
+	  }
+
+	}
+
+	var processPayment = function(totalPayable, coinsInput){
+
+	  var cashPaid = 0;
+
+	  for(var i = 0; i < coinsInput.length; i++){
+		cashPaid+= coinsInput[i];
+		addCoin( coinsInput[i] );
+	  }
+
+	  var change = getChange(totalPayable, cashPaid); 
+
+	  if( change.length >= 1 ){
+		return change;
+	  }else{
+		return cashPaid - totalPayable;
+	  }
+
+	}
+
+	</script>
+
+	<script>
+
+	test('Return correct change', function(){
+	  deepEqual(getChange(486,1000), [500, 10, 2, 2]);
+	});
+
+	test('Sample coin subtraction works', function( assert ){
+
+	  var current = checkCoins(20);
+	  getChange(210,300);
+	  equal(checkCoins(20), current-2);
+ 
+	});
+
+	test('Force the machine to run out of 20p coins', function( assert ){
+	  
+	  // Make a low number of '20' coins
+	  coins[7].remaining = 3;
+	  getChange(210,300);
+	  deepEqual(getChange(210,300), [50,20,10,10]);
+	  coins[7].remaining = 10;
+	
+	});
+
+	test('Add a coin', function( assert ){
+
+	  coins[7].remaining = 0;
+	  equal(addCoin(20),1);
+	  coins[7].remaining = 10;
+
+	});
+
+	test('Return no change', function( assert ){
+	  deepEqual(getChange(1000,100),[]);
+	});
+
+	test('Process payment', function( assert){
+	  deepEqual(processPayment(450, [100,100,100,100,100]),[50]);
+	});
+
+	test('Process exact payment', function( assert){
+	  equal(processPayment(450, [100,100,100,100, 50]),0);
+	});
+
+	test('Process underpayment', function( assert){
+	  equal(processPayment(450, [100,100,100,100]),-50);
+	});
+
+	</script>
+  </body>
+</html>
